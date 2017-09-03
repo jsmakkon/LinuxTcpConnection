@@ -1,0 +1,66 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.16
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LinuxTcpConnection", "LinuxTcpConnection\LinuxTcpConnection.vcxproj", "{E663EAE3-1F04-4D19-94CB-6A1C2BB04109}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TcpConnectionTester", "TcpConnectionTester\TcpConnectionTester.vcxproj", "{1E27F9F0-1FA4-4E49-BACF-50E9BC14F05D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E663EAE3-1F04-4D19-94CB-6A1C2BB04109} = {E663EAE3-1F04-4D19-94CB-6A1C2BB04109}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM = Debug|ARM
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|ARM = Release|ARM
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+		RelVirtual|ARM = RelVirtual|ARM
+		RelVirtual|x64 = RelVirtual|x64
+		RelVirtual|x86 = RelVirtual|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E663EAE3-1F04-4D19-94CB-6A1C2BB04109}.Debug|ARM.ActiveCfg = Debug|ARM
+		{E663EAE3-1F04-4D19-94CB-6A1C2BB04109}.Debug|ARM.Build.0 = Debug|ARM
+		{E663EAE3-1F04-4D19-94CB-6A1C2BB04109}.Debug|x64.ActiveCfg = Debug|x64
+		{E663EAE3-1F04-4D19-94CB-6A1C2BB04109}.Debug|x64.Build.0 = Debug|x64
+		{E663EAE3-1F04-4D19-94CB-6A1C2BB04109}.Debug|x86.ActiveCfg = Debug|x86
+		{E663EAE3-1F04-4D19-94CB-6A1C2BB04109}.Debug|x86.Build.0 = Debug|x86
+		{E663EAE3-1F04-4D19-94CB-6A1C2BB04109}.Release|ARM.ActiveCfg = Release|ARM
+		{E663EAE3-1F04-4D19-94CB-6A1C2BB04109}.Release|ARM.Build.0 = Release|ARM
+		{E663EAE3-1F04-4D19-94CB-6A1C2BB04109}.Release|x64.ActiveCfg = Release|x64
+		{E663EAE3-1F04-4D19-94CB-6A1C2BB04109}.Release|x64.Build.0 = Release|x64
+		{E663EAE3-1F04-4D19-94CB-6A1C2BB04109}.Release|x86.ActiveCfg = Release|x86
+		{E663EAE3-1F04-4D19-94CB-6A1C2BB04109}.Release|x86.Build.0 = Release|x86
+		{E663EAE3-1F04-4D19-94CB-6A1C2BB04109}.RelVirtual|ARM.ActiveCfg = RelVirtual|ARM
+		{E663EAE3-1F04-4D19-94CB-6A1C2BB04109}.RelVirtual|ARM.Build.0 = RelVirtual|ARM
+		{E663EAE3-1F04-4D19-94CB-6A1C2BB04109}.RelVirtual|x64.ActiveCfg = RelVirtual|x64
+		{E663EAE3-1F04-4D19-94CB-6A1C2BB04109}.RelVirtual|x64.Build.0 = RelVirtual|x64
+		{E663EAE3-1F04-4D19-94CB-6A1C2BB04109}.RelVirtual|x86.ActiveCfg = RelVirtual|x86
+		{E663EAE3-1F04-4D19-94CB-6A1C2BB04109}.RelVirtual|x86.Build.0 = RelVirtual|x86
+		{1E27F9F0-1FA4-4E49-BACF-50E9BC14F05D}.Debug|ARM.ActiveCfg = Debug|ARM
+		{1E27F9F0-1FA4-4E49-BACF-50E9BC14F05D}.Debug|ARM.Build.0 = Debug|ARM
+		{1E27F9F0-1FA4-4E49-BACF-50E9BC14F05D}.Debug|x64.ActiveCfg = Debug|x64
+		{1E27F9F0-1FA4-4E49-BACF-50E9BC14F05D}.Debug|x64.Build.0 = Debug|x64
+		{1E27F9F0-1FA4-4E49-BACF-50E9BC14F05D}.Debug|x86.ActiveCfg = Debug|x86
+		{1E27F9F0-1FA4-4E49-BACF-50E9BC14F05D}.Debug|x86.Build.0 = Debug|x86
+		{1E27F9F0-1FA4-4E49-BACF-50E9BC14F05D}.Release|ARM.ActiveCfg = Release|ARM
+		{1E27F9F0-1FA4-4E49-BACF-50E9BC14F05D}.Release|ARM.Build.0 = Release|ARM
+		{1E27F9F0-1FA4-4E49-BACF-50E9BC14F05D}.Release|x64.ActiveCfg = Release|x64
+		{1E27F9F0-1FA4-4E49-BACF-50E9BC14F05D}.Release|x64.Build.0 = Release|x64
+		{1E27F9F0-1FA4-4E49-BACF-50E9BC14F05D}.Release|x86.ActiveCfg = Release|x86
+		{1E27F9F0-1FA4-4E49-BACF-50E9BC14F05D}.Release|x86.Build.0 = Release|x86
+		{1E27F9F0-1FA4-4E49-BACF-50E9BC14F05D}.RelVirtual|ARM.ActiveCfg = RelVirtual|ARM
+		{1E27F9F0-1FA4-4E49-BACF-50E9BC14F05D}.RelVirtual|ARM.Build.0 = RelVirtual|ARM
+		{1E27F9F0-1FA4-4E49-BACF-50E9BC14F05D}.RelVirtual|x64.ActiveCfg = RelVirtual|x64
+		{1E27F9F0-1FA4-4E49-BACF-50E9BC14F05D}.RelVirtual|x64.Build.0 = RelVirtual|x64
+		{1E27F9F0-1FA4-4E49-BACF-50E9BC14F05D}.RelVirtual|x86.ActiveCfg = RelVirtual|x86
+		{1E27F9F0-1FA4-4E49-BACF-50E9BC14F05D}.RelVirtual|x86.Build.0 = RelVirtual|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

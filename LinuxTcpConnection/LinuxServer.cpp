@@ -11,13 +11,13 @@
 namespace jm_networking {
 
 
-	LinuxServer::LinuxServer():sendHandler(CALLBACK) {
-		this->running = 0;
+	LinuxServer::LinuxServer():sendHandler_(CALLBACK) {
+		this->running_ = 0;
 	}
 
 	LinuxServer::~LinuxServer() {
-		this->running = 0;
-		this->listenThread.join();
+		this->running_ = 0;
+		this->listenThread_.join();
 	}
 
 	// TODO: Throw on fails
@@ -25,21 +25,21 @@ namespace jm_networking {
 
 		int opt = 1, id = 0;
 
-		this->serverSocket= socket(AF_INET, SOCK_STREAM, 0);
+		this->serverSocket_= socket(AF_INET, SOCK_STREAM, 0);
 
-		if (this->serverSocket < 0) {
+		if (this->serverSocket_ < 0) {
 			printf("Creating server socket failed: %d\n", errno);
 			return ;
 		}
 
-		int status = fcntl(this->serverSocket, F_SETFL, fcntl(this->serverSocket, F_GETFL, 0) | O_NONBLOCK);
+		int status = fcntl(this->serverSocket_, F_SETFL, fcntl(this->serverSocket_, F_GETFL, 0) | O_NONBLOCK);
 
 		if (status == -1) {
 			printf("Fcntl failed: %d\n", errno);
 			return;
 		}
 
-		if (setsockopt(this->serverSocket, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)) < 0)
+		if (setsockopt(this->serverSocket_, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)) < 0)
 		{
 			printf("Setsockopt failed\n"); 
 			return;
@@ -49,31 +49,31 @@ namespace jm_networking {
 		
 		servAddr.sin_family = AF_INET;
 		servAddr.sin_addr.s_addr = INADDR_ANY;
-		servAddr.sin_port = htons((uint16_t)this->port);
+		servAddr.sin_port = htons((uint16_t)this->port_);
 
-		if (bind(this->serverSocket, (struct sockaddr *) &servAddr,
+		if (bind(this->serverSocket_, (struct sockaddr *) &servAddr,
 			sizeof(servAddr)) < 0) {
 			return ;
 		}
 
 		int servAddrLen = sizeof(servAddr);
 
-		listen(this->serverSocket, 3);
+		listen(this->serverSocket_, 3);
 		int select_ret = 0;
 		fd_set readSet;
 		int client_sock;
-		int greatest_fd = this->serverSocket;
+		int greatest_fd = this->serverSocket_;
 		long read_amount;
 		char buffer[1025]; // TODO: Check for proper buffer size
 		struct timeval timeout;
-		while (this->running) {
+		while (this->running_) {
 			// Set timeout
 			timeout.tv_sec = 1;
 			timeout.tv_usec = 0;
 			// Clear the set
 			FD_ZERO(&readSet);
 			// Add serversocket to set
-			FD_SET(this->serverSocket, &readSet);
+			FD_SET(this->serverSocket_, &readSet);
 			// Add all the connections to set
 			int temp_socket;
 			for (int i = 0; i < this->GetConnectionCount(); i++) {
@@ -94,8 +94,8 @@ namespace jm_networking {
 				// TODO: Handle error
 				return;
 			}
-			else if (FD_ISSET(this->serverSocket, &readSet)){ // New connection arriving
-				client_sock = accept(this->serverSocket, (struct sockaddr *)&servAddr, (socklen_t*)&servAddrLen);
+			else if (FD_ISSET(this->serverSocket_, &readSet)){ // New connection arriving
+				client_sock = accept(this->serverSocket_, (struct sockaddr *)&servAddr, (socklen_t*)&servAddrLen);
 				if (client_sock < 0) {
 					// Client is gone already, or some error occured
 					// TODO: Proper error handling
@@ -141,48 +141,48 @@ namespace jm_networking {
 			}
 		}
 
-		close(this->serverSocket);
+		close(this->serverSocket_);
 	}
 
 	int LinuxServer::StartServer(int p) {
 		// TODO: Success of start of listening should be returned
-		this->port = p;
-		this->running = 1;
+		this->port_ = p;
+		this->running_ = 1;
 		// Start listening connections in new thread
-		this->listenThread = std::thread(&LinuxServer::ListenForConnections, this);
+		this->listenThread_ = std::thread(&LinuxServer::ListenForConnections, this);
 		// Add callback to sendHandler to send the messages
-		this->sendHandler.AddMessageCallback(&LinuxServer::SendToSocket,this);
+		this->sendHandler_.AddMessageCallback(&LinuxServer::SendToSocket,this);
 
 		return 0;
 	}
 
 	// ServerData - Connections
 	void LinuxServer::InsertConnection(Connection* con) {
-		std::unique_lock<std::mutex> lock(connectionsMutex);
-		clientConnections.push_back(con);
+		std::unique_lock<std::mutex> lock(connectionsMutex_);
+		clientConnections_.push_back(con);
 	}
 
 	int LinuxServer::GetConnectionCount() {
 		int count = -1;
-		std::unique_lock<std::mutex> lock(connectionsMutex);
-		count = static_cast<int>(clientConnections.size());
+		std::unique_lock<std::mutex> lock(connectionsMutex_);
+		count = static_cast<int>(clientConnections_.size());
 		return count;
 	}
 
 	Connection* LinuxServer::GetConnectionByIndex(unsigned int index) {
 		Connection* con = NULL;
-		std::unique_lock<std::mutex> lock(connectionsMutex);
-		if (index < clientConnections.size()) {
-			con = clientConnections[index];
+		std::unique_lock<std::mutex> lock(connectionsMutex_);
+		if (index < clientConnections_.size()) {
+			con = clientConnections_[index];
 		}
 		return con;
 	}
 
 	Connection* LinuxServer::GetConnectionById(int id) {
 		Connection* con = NULL;
-		std::unique_lock<std::mutex> lock(connectionsMutex);
-		std::vector<Connection*>::iterator it = clientConnections.begin();
-		for (; it != clientConnections.end(); it++) {
+		std::unique_lock<std::mutex> lock(connectionsMutex_);
+		std::vector<Connection*>::iterator it = clientConnections_.begin();
+		for (; it != clientConnections_.end(); it++) {
 			if ((*it)->id == id) {
 				con = *it;
 			}
@@ -191,20 +191,20 @@ namespace jm_networking {
 		return con;
 	}
 	void LinuxServer::RemoveConnectionById(int id) {
-		std::unique_lock<std::mutex> lock(connectionsMutex);
-		std::vector<Connection*>::iterator it = clientConnections.begin();
-		for (; it != clientConnections.end(); it++) {
+		std::unique_lock<std::mutex> lock(connectionsMutex_);
+		std::vector<Connection*>::iterator it = clientConnections_.begin();
+		for (; it != clientConnections_.end(); it++) {
 			if ((*it)->id == id) {
-				clientConnections.erase(it);
+				clientConnections_.erase(it);
 			}
 		}
 	}
 
 	void LinuxServer::RemoveConnectionByIndex(int index) {
-		std::unique_lock<std::mutex> lock(connectionsMutex);
-		Connection* con = this->clientConnections[index];
+		std::unique_lock<std::mutex> lock(connectionsMutex_);
+		Connection* con = this->clientConnections_[index];
 		delete con;
-		this->clientConnections.erase(this->clientConnections.begin() +index);
+		this->clientConnections_.erase(this->clientConnections_.begin() +index);
 
 	}
 
@@ -221,34 +221,34 @@ namespace jm_networking {
 	}
 
 	void LinuxServer::SendMessage(int id, std::string message) {
-		this->sendHandler.AddMessage(id, message);
+		this->sendHandler_.AddMessage(id, message);
 	}
 
 	void LinuxServer::SendGlobalMessage(std::string message) {
-		for (unsigned int i = 0; i < this->clientConnections.size(); i++) {
-			this->sendHandler.AddMessage(this->clientConnections[i]->id, message);
+		for (unsigned int i = 0; i < this->clientConnections_.size(); i++) {
+			this->sendHandler_.AddMessage(this->clientConnections_[i]->id, message);
 		}
 	}
 
 	void LinuxServer::AddReceivedMessage(int id, const std::string& message) {
 		// TODO: Move this to messagehandler if possible, with ListenForReceivedMessage
-		std::unique_lock<std::mutex> lock(this->queueMutex);
-		this->mHandler.AddMessage(id, message);
-		this->queueCv.notify_all();
+		std::unique_lock<std::mutex> lock(this->queueMutex_);
+		this->receivedHandler_.AddMessage(id, message);
+		this->queueCv_.notify_all();
 	}
 
 	std::pair<int, std::string> LinuxServer::ListenForReceivedMessage(int timeout) {
 		std::pair<int, std::string> message;
-		std::unique_lock<std::mutex> lock(this->queueMutex);
-		message = this->mHandler.GetMessage();
-		if (message.first == -1 && this->running == 1) {
+		std::unique_lock<std::mutex> lock(this->queueMutex_);
+		message = this->receivedHandler_.GetMessage();
+		if (message.first == -1 && this->running_ == 1) {
 			if (timeout == -1) {
-				this->queueCv.wait(lock);
+				this->queueCv_.wait(lock);
 			}
 			else {
-				this->queueCv.wait_for(lock, std::chrono::milliseconds(timeout));
+				this->queueCv_.wait_for(lock, std::chrono::milliseconds(timeout));
 			}
-			message = this->mHandler.GetMessage();
+			message = this->receivedHandler_.GetMessage();
 		}
 
 		return message;

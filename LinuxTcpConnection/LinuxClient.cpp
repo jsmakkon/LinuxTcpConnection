@@ -4,8 +4,10 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <cstring>
+#include <netdb.h>
 
 #include "LinuxClient.h"
+
 namespace jm_networking {
 
 	LinuxClient::LinuxClient() : sendHandler_(CALLBACK) {
@@ -17,7 +19,7 @@ namespace jm_networking {
 
 	LinuxClient::~LinuxClient() {
 		this->running_ = 0;
-		this->receiverThread.join();
+		this->receiverThread_.join();
 	}
 	// Graceful closing of socket, TODO
 	void LinuxClient::CloseSocket() {
@@ -42,7 +44,7 @@ namespace jm_networking {
 		}
 		else { // Some input from socket
 			printf("CloseSocket something to read");
-			long read_amount = read(this->socket_, discard_buffer, 1024);
+			read(this->socket_, discard_buffer, 1024);
 		}
 
 		if (shutdown(this->socket_, SHUT_RDWR) < 0) {
@@ -52,6 +54,7 @@ namespace jm_networking {
 		if (close(this->socket_) < 0) {
 			printf("Close error: %d", errno);
 		}
+		this->connected_ = 0;
 	}
 
 	void LinuxClient::ListenForMessages() {
@@ -74,13 +77,14 @@ namespace jm_networking {
 
 			if (retValue == 0) // Timeout
 			{
-				// TODO: keepalive check here
+				// TODO: keepalive and ping check here
 				continue;
 			}
 			else if (retValue == -1) // Error
 			{
 				// TODO: Handle error
-				return;
+				printf("Socket error, closing socket");
+				break;
 			}
 			else { // Some input from socket
 				read_amount = read(this->socket_, buffer, 1024);
@@ -88,7 +92,7 @@ namespace jm_networking {
 				if (read_amount == 0)
 				{
 					// Server disconnected us, close the socket
-					printf("Socket ");
+					printf("Socket disconnected");
 					this->running_ = 0;
 				}
 				else if (read_amount < 0) {
@@ -106,75 +110,107 @@ namespace jm_networking {
 		this->CloseSocket();
 	}
 	
-	int LinuxClient::ConnectTo(std::string ip, int port, int timeout_millis)
+	int LinuxClient::ConnectTo(std::string address, int port, int timeout_millis)
 	{
+		if (this->connected_ == 1) {
+			printf("Trying to connect when connected, returning");
+			return -1;
+		}
 		int retStatus = 0;
 		fd_set fdset;
 		socklen_t len;
 		int valopt;
 		struct timeval timeout;
-		this->socket_ = socket(AF_INET, SOCK_STREAM, 0);
+		struct addrinfo hints;
+		struct addrinfo *addresses, *adr;
+		memset(&hints, 0, sizeof hints);
+		hints.ai_family = AF_INET; // We go with ipv4 for now
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_protocol = 0;
+		std::string port_str = std::to_string(port);
 
-		if (this->socket_ < 0) {
-			printf("Creating server socket failed: %d\n", errno);
-			return -1;
+		int ret = getaddrinfo(address.c_str(), port_str.c_str(), &hints, &addresses);
+		if (ret != 0)
+		{
+			printf("getaddrinfo error\n");
+			return- 1;
 		}
 
-		int status = fcntl(this->socket_, F_SETFL, fcntl(this->socket_, F_GETFL, 0) | O_NONBLOCK);
+		for (adr = addresses; adr != NULL; adr = adr->ai_next) {
+			this->socket_ = socket(adr->ai_family, adr->ai_socktype,
+				adr->ai_protocol);
 
-		if (status == -1) {
-			printf("Fcntl failed: %d\n", errno);
-			return -1;
-		}
+			if (this->socket_ < 0) {
+				printf("Failed to create socket\n");
+				continue;
+			}
 
-		struct sockaddr_in servAddr;
+			int status = fcntl(this->socket_, F_SETFL, fcntl(this->socket_, F_GETFL, 0) | O_NONBLOCK);
 
-		servAddr.sin_family = AF_INET;
-		servAddr.sin_addr.s_addr = inet_addr(ip.c_str());
-		servAddr.sin_port = htons((uint16_t)port);
+			if (status == -1) {
+				printf("Fcntl failed: %d\n", errno);
+				close(this->socket_);
+				continue;
+			}
+			retStatus = connect(this->socket_, adr->ai_addr, adr->ai_addrlen);
 
-		retStatus = connect(this->socket_, (struct sockaddr *)&servAddr, sizeof(servAddr));
+			if (retStatus < 0) {
+				if (errno == EINPROGRESS) {
 
-		if (retStatus < 0) {
-			if (errno == EINPROGRESS) {
-
-				timeout.tv_sec = timeout_millis / 1000;
-				timeout.tv_usec = (timeout_millis % 1000)*1000;
-				FD_ZERO(&fdset);
-				FD_SET(this->socket_, &fdset);
-				retStatus = select(this->socket_ + 1, NULL, &fdset, NULL, &timeout);
-				if (retStatus < 0 && errno != EINTR) {
-					printf("Error connecting %d\n", errno);
-					return -1;
-				}
-				else if (retStatus > 0) {
-					// Socket selected for write 
-					len = sizeof(int);
-					if (getsockopt(this->socket_, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &len) < 0) {
-						printf("Error in getsockopt() %d\n", errno);
-						return -1;
+					timeout.tv_sec = timeout_millis / 1000;
+					timeout.tv_usec = (timeout_millis % 1000) * 1000;
+					FD_ZERO(&fdset);
+					FD_SET(this->socket_, &fdset);
+					retStatus = select(this->socket_ + 1, NULL, &fdset, NULL, &timeout);
+					if (retStatus < 0 && errno != EINTR) {
+						printf("Error connecting %d\n", errno);
+						close(this->socket_);
+						continue;
 					}
-					// Check the value returned... 
-					if (valopt) {
-						printf("Error in delayed connection() %d\n", valopt);
-						return -1;
+					else if (retStatus > 0) {
+						// Socket selected for write 
+						len = sizeof(int);
+						if (getsockopt(this->socket_, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &len) < 0) {
+							printf("Error in getsockopt() %d\n", errno);
+							close(this->socket_);
+							continue;
+						}
+						// Check the error value it is fine
+						if (valopt) {
+							printf("Error in delayed connection() %d\n", valopt);
+							close(this->socket_);
+							continue;
+						}
+						// We have connection now
+						this->connected_ = 1;
+						break;
 					}
-					// We have connection now
+					else {
+						printf("Client select timeout, failed to connect in 5s\n");
+						close(this->socket_);
+						continue;
+					}
 				}
 				else {
-					printf("Client select timeout, failed to connect in 5s\n");
-					return -1;
+					printf("Connect failed to address: %d\n", errno);
+					close(this->socket_);
+					continue;
 				}
 			}
-			else {
-				fprintf(stderr, "Error connecting %d\n", errno);
-				return -1;
-			}
 		}
-		this->running_ = 1;
-		// Start thread to listen for messages
-		this->receiverThread = std::thread(&LinuxClient::ListenForMessages, this);
-		return 1;
+
+		// Resolve the result
+		if (this->connected_ == 0) {
+			printf("Failed to connect\n");
+			return -1;
+		}
+		else {
+			// Start thread to listen for incoming messages
+			this->running_ = 1;
+			printf("Connection succesful");
+			this->receiverThread_ = std::thread(&LinuxClient::ListenForMessages, this);
+			return 0;
+		}
 	}
 
 	int LinuxClient::isConnected()
@@ -185,26 +221,26 @@ namespace jm_networking {
 		this->running_ = 0;
 		// TODO: Add 0 message to disconnect faster
 	}
-	void LinuxClient::SendMessage(int id, std::string message) {
-		this->sendHandler_.AddMessage(0,message);
+	void LinuxClient::SendMessage(std::string message) {
+		this->sendHandler_.AddMessage(0, message);
 	}
 
 	void LinuxClient::AddReceivedMessage(int id, const std::string& message) {
-		std::unique_lock<std::mutex> lock(this->receiveMutex);
+		std::unique_lock<std::mutex> lock(this->receiveMutex_);
 		this->receiveHandler_.AddMessage(id, message);
-		this->receiveCv.notify_all();
+		this->receiveCv_.notify_all();
 	}
 
 	std::pair<int, std::string> LinuxClient::ListenForReceivedMessage(int timeout) {
 		std::pair<int, std::string> message;
-		std::unique_lock<std::mutex> lock(this->receiveMutex);
+		std::unique_lock<std::mutex> lock(this->receiveMutex_);
 		message = this->receiveHandler_.GetMessage();
 		if (message.first == -1 && this->running_ == 1) {
 			if (timeout == -1) {
-				this->receiveCv.wait(lock);
+				this->receiveCv_.wait(lock);
 			}
 			else {
-				this->receiveCv.wait_for(lock, std::chrono::milliseconds(timeout));
+				this->receiveCv_.wait_for(lock, std::chrono::milliseconds(timeout));
 			}
 			message = this->receiveHandler_.GetMessage();
 		}

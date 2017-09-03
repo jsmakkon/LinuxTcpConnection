@@ -50,10 +50,13 @@
       <Platform>x86</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="mainTest.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{e663eae3-1f04-4d19-94cb-6a1c2bb04109}</ProjectGuid>
+    <ProjectGuid>{1e27f9f0-1fa4-4e49-bacf-50e9bc14f05d}</ProjectGuid>
     <Keyword>Linux</Keyword>
-    <RootNamespace>LinuxTcpConnection</RootNamespace>
+    <RootNamespace>TcpConnectionTester</RootNamespace>
     <MinimumVisualStudioVersion>15.0</MinimumVisualStudioVersion>
     <ApplicationType>Linux</ApplicationType>
     <ApplicationTypeRevision>1.0</ApplicationTypeRevision>
@@ -87,19 +90,15 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
-    <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <UseDebugLibraries>false</UseDebugLibraries>
-    <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release(VirtualBox)|x64'" Label="Configuration">
     <UseDebugLibraries>false</UseDebugLibraries>
-    <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelVirtual|x64'" Label="Configuration">
     <UseDebugLibraries>false</UseDebugLibraries>
-    <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings" />
@@ -107,25 +106,42 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(IncludePath)</IncludePath>
     <OutDir>$(ProjectDir)bin\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
-  <ItemGroup>
-    <ClCompile Include="LinuxClient.cpp" />
-    <ClCompile Include="LinuxServer.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="LinuxClient.h" />
-    <ClInclude Include="MessageHandler.h" />
-    <ClInclude Include="LinuxServer.h" />
-  </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Link>
+      <LibraryDependencies>pthread</LibraryDependencies>
+      <AdditionalDependencies>$(RemoteRootDir)/LinuxTcpConnection/bin/$(Platform)/$(Configuration)/libLinuxTcpConnection.a;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
     <ClCompile>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <CompileAs>Default</CompileAs>
+      <AdditionalIncludeDirectories>..\LinuxTcpConnection;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>..\LinuxTcpConnection;$(StlIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalOptions>-pthread %(AdditionalOptions)</AdditionalOptions>
+      <LibraryDependencies>pthread</LibraryDependencies>
+      <AdditionalDependencies>$(RemoteRootDir)/LinuxTcpConnection/bin/$(Platform)/$(Configuration)/libLinuxTcpConnection.a;$(StlAdditionalDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release(VirtualBox)|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>..\LinuxTcpConnection;$(StlIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <LibraryDependencies>pthread</LibraryDependencies>
+      <AdditionalDependencies>$(RemoteRootDir)/LinuxTcpConnection/bin/$(Platform)/$(Configuration)/libLinuxTcpConnection.a;$(StlAdditionalDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelVirtual|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>..\LinuxTcpConnection;$(StlIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <LibraryDependencies>pthread</LibraryDependencies>
+      <AdditionalDependencies>$(RemoteRootDir)/LinuxTcpConnection/bin/$(Platform)/$(Configuration)/libLinuxTcpConnection.a;$(StlAdditionalDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

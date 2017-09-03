@@ -9,13 +9,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="mainTest.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
     <ClCompile Include="LinuxServer.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="MessageHandler.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="LinuxClient.cpp">
